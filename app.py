@@ -4,10 +4,12 @@ import pdfplumber
 import openai
 import os
 import json
+import tempfile
 from urllib.parse import quote
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template_string
 
 app = Flask(__name__)
+print("Starting Flask app with upload routes...")
 
 # Load environment variables
 AIRTABLE_BASE_ID = os.environ.get("AIRTABLE_BASE_ID")
@@ -163,8 +165,44 @@ PDF Text:
 
     return jsonify({"message": "Ticket processed successfully", "extracted_fields": cleaned_fields})
 
+# -------------------------
+# Upload routes for multipage PDF
+# -------------------------
+
+@app.route('/upload', methods=['GET'])
+def upload_form():
+    return render_template_string('''
+        <h2>Upload Full Ticket PDF</h2>
+        <form method="POST" action="/upload" enctype="multipart/form-data">
+          <input type="file" name="pdf_file" accept="application/pdf" required>
+          <button type="submit">Upload PDF</button>
+        </form>
+    ''')
+
+@app.route('/upload', methods=['POST'])
+def upload_pdf():
+    if 'pdf_file' not in request.files:
+        return "No file part", 400
+    file = request.files['pdf_file']
+    if file.filename == '':
+        return "No selected file", 400
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+        tmp.write(file.read())
+        tmp_path = tmp.name
+
+    print(f"Received PDF saved at {tmp_path}")
+
+    # Call your PDF splitting and upload function here
+    from split_and_upload import split_and_upload_pdf
+    result = split_and_upload_pdf(tmp_path)
+
+    if result and result.get("success"):
+        return f"✅ Uploaded {result['processed_count']} ticket pages."
+    else:
+        return "❌ Failed to process PDF", 500
+
+
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5050))
     app.run(host="0.0.0.0", port=port, debug=True)
-
