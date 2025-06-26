@@ -97,7 +97,7 @@ def process_ticket():
 You are a helpful assistant that extracts structured ticket information from text.
 
 Extract the following fields and return a JSON object with these exact keys:
-Show Name, Show Date, Section, Row, Seat, Order ID, Page Number, Venue, Price, Time.
+Show Name, Show Date, Section, Row, Seat, Agent Order ID, Page Number, Venue, Price, Time.
 
 If a field is missing in the text, return its value as an empty string.
 
@@ -109,7 +109,7 @@ Example output:
   "Section": "Orchestra",
   "Row": "B",
   "Seat": "12",
-  "Order ID": "123456789",
+  "Agent Order ID": "123456789",
   "Page Number": "1",
   "Venue": "Richard Rodgers Theatre",
   "Price": "$120",
